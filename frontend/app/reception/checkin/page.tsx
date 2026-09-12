@@ -65,7 +65,7 @@ export default async function ReceptionCheckinPage({
         <p className="mt-1 text-sm text-neutral-500">
           Scan the member&apos;s QR code — a handheld scanner types it in like a keyboard.
         </p>
-        <form action={checkInByToken} className="mt-4">
+        <form action={checkInByToken} className="mt-4 flex gap-3">
           <input
             type="text"
             name="token"
@@ -73,6 +73,14 @@ export default async function ReceptionCheckinPage({
             placeholder="Scan or paste QR code"
             className="w-full rounded-lg border border-white/20 bg-transparent px-4 py-4 text-lg text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
           />
+          {/* A scanner's trailing Enter should submit the lone input on its own per the HTML spec,
+              but an explicit submit button makes that reliable and gives staff a manual fallback. */}
+          <button
+            type="submit"
+            className="shrink-0 rounded-full bg-lime-400 px-6 text-sm font-semibold text-neutral-950 hover:bg-lime-300"
+          >
+            Check In
+          </button>
         </form>
       </section>
 
