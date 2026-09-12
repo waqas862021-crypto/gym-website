@@ -5,6 +5,7 @@ import { ADMIN_ROLES, type AppRole } from "@/lib/roles";
 import { signOut } from "../(auth)/actions";
 import { updateMemberRole, toggleMemberActive, adminRenewMembership } from "./actions";
 import { createKbEntry, toggleKbActive, deleteKbEntry, resolveTicket } from "./ai-actions";
+import { createTrainer, toggleTrainerActive, createClass, deleteClass } from "./classes-actions";
 
 const ALL_ROLES: AppRole[] = ["member", "reception", "customer_service", "admin", "super_admin"];
 
@@ -21,7 +22,16 @@ export default async function AdminPage({
   const search = (q ?? "").trim();
   const searchPattern = `%${search}%`;
 
-  const [{ rows: statRows }, { rows: members }, { rows: plans }, { rows: emailLogs }, { rows: kbEntries }, { rows: openTickets }] = await Promise.all([
+  const [
+    { rows: statRows },
+    { rows: members },
+    { rows: plans },
+    { rows: emailLogs },
+    { rows: kbEntries },
+    { rows: openTickets },
+    { rows: trainers },
+    { rows: classes },
+  ] = await Promise.all([
     sql`
       with latest_memberships as (
         select distinct on (user_id) user_id, end_date
@@ -65,6 +75,17 @@ export default async function AdminPage({
       where status = 'open'
       order by created_at desc
       limit 20
+    `,
+    sql`select id, name, specialty, is_active from trainers order by created_at`,
+    sql`
+      select c.id, c.name, t.name as trainer_name,
+        to_char(c.starts_at, 'YYYY-MM-DD HH24:MI') as starts_at,
+        c.duration_minutes, c.capacity,
+        (select count(*) from bookings b where b.class_id = c.id) as booked_count
+      from classes c
+      join trainers t on t.id = c.trainer_id
+      order by c.starts_at desc
+      limit 30
     `,
   ]);
   const stats = statRows[0];
@@ -324,6 +345,148 @@ export default async function AdminPage({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">Trainers</h2>
+        <p className="mt-1 text-xs text-neutral-500">Shown on the public site&apos;s Personal Training section.</p>
+
+        <form action={createTrainer} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <input
+            type="text"
+            name="name"
+            placeholder="Trainer name"
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <input
+            type="text"
+            name="specialty"
+            placeholder="Specialty"
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <textarea
+            name="bio"
+            placeholder="Bio (optional)"
+            rows={2}
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none sm:col-span-2"
+          />
+          <button
+            type="submit"
+            className="self-start rounded-full bg-lime-400 px-5 py-2 text-xs font-semibold text-neutral-950 hover:bg-lime-300 sm:col-span-2"
+          >
+            Add Trainer
+          </button>
+        </form>
+
+        <ul className="mt-6 space-y-2">
+          {trainers.map((trainer) => (
+            <li
+              key={trainer.id}
+              className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3 text-sm"
+            >
+              <div>
+                <p className="font-medium">{trainer.name}</p>
+                <p className="text-xs text-neutral-500">{trainer.specialty}</p>
+              </div>
+              <form action={toggleTrainerActive}>
+                <input type="hidden" name="id" value={trainer.id} />
+                <input type="hidden" name="isActive" value={String(trainer.is_active)} />
+                <button
+                  type="submit"
+                  className={trainer.is_active ? "text-xs text-green-400" : "text-xs text-red-400"}
+                >
+                  {trainer.is_active ? "Active (hide)" : "Hidden (show)"}
+                </button>
+              </form>
+            </li>
+          ))}
+          {trainers.length === 0 && <p className="text-sm text-neutral-400">No trainers yet.</p>}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">Classes</h2>
+        <p className="mt-1 text-xs text-neutral-500">Members book these from the portal.</p>
+
+        <form action={createClass} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <select
+            name="trainerId"
+            required
+            className="rounded-lg border border-white/20 bg-neutral-900 px-3 py-2 text-sm text-white focus:border-white/50 focus:outline-none"
+          >
+            <option value="">Select trainer</option>
+            {trainers.map((trainer) => (
+              <option key={trainer.id} value={trainer.id}>
+                {trainer.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            name="name"
+            placeholder="Class name"
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <input
+            type="datetime-local"
+            name="startsAt"
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white focus:border-white/50 focus:outline-none"
+          />
+          <input
+            type="number"
+            name="durationMinutes"
+            placeholder="Duration (min)"
+            defaultValue={60}
+            min={1}
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <input
+            type="number"
+            name="capacity"
+            placeholder="Capacity"
+            defaultValue={10}
+            min={1}
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="self-start rounded-full bg-lime-400 px-5 py-2 text-xs font-semibold text-neutral-950 hover:bg-lime-300 sm:col-span-2"
+          >
+            Add Class
+          </button>
+        </form>
+
+        <ul className="mt-6 space-y-2">
+          {classes.map((cls) => (
+            <li
+              key={cls.id}
+              className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3 text-sm"
+            >
+              <div>
+                <p className="font-medium">{cls.name}</p>
+                <p className="text-xs text-neutral-500">
+                  {cls.starts_at} · {cls.duration_minutes} min · with {cls.trainer_name}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {cls.booked_count}/{cls.capacity} booked
+                </p>
+              </div>
+              <form action={deleteClass}>
+                <input type="hidden" name="id" value={cls.id} />
+                <button type="submit" className="text-xs text-neutral-500 hover:text-red-400">
+                  Delete
+                </button>
+              </form>
+            </li>
+          ))}
+          {classes.length === 0 && <p className="text-sm text-neutral-400">No classes scheduled.</p>}
+        </ul>
       </section>
 
       <form action={signOut}>

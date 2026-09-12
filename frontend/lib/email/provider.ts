@@ -3,7 +3,8 @@ export type EmailType =
   | "payment_confirmation"
   | "renewal_reminder"
   | "membership_expired"
-  | "contact_response";
+  | "contact_response"
+  | "booking_confirmation";
 
 export type EmailStatus = "sent" | "failed";
 

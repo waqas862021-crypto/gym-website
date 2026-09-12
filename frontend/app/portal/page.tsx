@@ -8,38 +8,58 @@ import { ChatWidget } from "@/components/chat-widget";
 import { signOut } from "../(auth)/actions";
 import { updateProfile } from "./actions";
 import { renewMembership } from "./payments";
+import { bookClassAction, cancelBookingAction } from "./bookings";
 
 export default async function PortalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; renewed?: string }>;
+  searchParams: Promise<{ error?: string; renewed?: string; booked?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const { error, renewed } = await searchParams;
+  const { error, renewed, booked } = await searchParams;
 
-  const [{ rows: userRows }, membership, { rows: plans }, { rows: paymentRows }, { rows: attendanceRows }] =
-    await Promise.all([
-      sql`select full_name, is_active from users where id = ${session.userId}`,
-      getCurrentMembership(session.userId),
-      sql`select slug, name, price_sar from membership_plans order by sort_order`,
-      sql`
-        select id, plan_slug, amount_sar, status,
-          to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
-        from payments
-        where user_id = ${session.userId}
-        order by created_at desc
-        limit 10
-      `,
-      sql`
-        select id, method, to_char(checked_in_at, 'YYYY-MM-DD HH24:MI') as checked_in_at
-        from attendance
-        where user_id = ${session.userId}
-        order by checked_in_at desc
-        limit 10
-      `,
-    ]);
+  const [
+    { rows: userRows },
+    membership,
+    { rows: plans },
+    { rows: paymentRows },
+    { rows: attendanceRows },
+    { rows: classRows },
+  ] = await Promise.all([
+    sql`select full_name, is_active from users where id = ${session.userId}`,
+    getCurrentMembership(session.userId),
+    sql`select slug, name, price_sar from membership_plans order by sort_order`,
+    sql`
+      select id, plan_slug, amount_sar, status,
+        to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+      from payments
+      where user_id = ${session.userId}
+      order by created_at desc
+      limit 10
+    `,
+    sql`
+      select id, method, to_char(checked_in_at, 'YYYY-MM-DD HH24:MI') as checked_in_at
+      from attendance
+      where user_id = ${session.userId}
+      order by checked_in_at desc
+      limit 10
+    `,
+    sql`
+      select c.id, c.name, to_char(c.starts_at, 'YYYY-MM-DD HH24:MI') as starts_at,
+        c.duration_minutes, c.capacity, t.name as trainer_name,
+        (select count(*) from bookings b where b.class_id = c.id) as booked_count,
+        exists(
+          select 1 from bookings b where b.class_id = c.id and b.user_id = ${session.userId}
+        ) as is_booked
+      from classes c
+      join trainers t on t.id = c.trainer_id
+      where c.starts_at >= now()
+      order by c.starts_at
+      limit 20
+    `,
+  ]);
 
   // The session JWT stays valid for up to 7 days regardless of DB state, so
   // an admin suspending a member mid-session needs this recheck to actually
@@ -63,6 +83,11 @@ export default async function PortalPage({
       {renewed && (
         <p className="rounded-lg border border-green-400/30 bg-green-400/10 px-4 py-3 text-sm text-green-400">
           Payment received — your membership has been extended.
+        </p>
+      )}
+      {booked && (
+        <p className="rounded-lg border border-green-400/30 bg-green-400/10 px-4 py-3 text-sm text-green-400">
+          You&apos;re booked into {booked}.
         </p>
       )}
       {error && (
@@ -121,6 +146,58 @@ export default async function PortalPage({
               ))}
             </ul>
           </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">Classes</h2>
+        <p className="mt-1 text-xs text-neutral-500">Book a spot in an upcoming class.</p>
+        {classRows.length === 0 ? (
+          <p className="mt-4 text-sm text-neutral-400">No upcoming classes scheduled.</p>
+        ) : (
+          <ul className="mt-4 space-y-3 text-sm">
+            {classRows.map((cls) => {
+              const full = Number(cls.booked_count) >= cls.capacity;
+              return (
+                <li
+                  key={cls.id}
+                  className="flex items-center justify-between gap-4 rounded-lg border border-white/10 p-4"
+                >
+                  <div>
+                    <p className="font-medium">{cls.name}</p>
+                    <p className="text-xs text-neutral-500">
+                      {cls.starts_at} · {cls.duration_minutes} min · with {cls.trainer_name}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      {cls.booked_count}/{cls.capacity} booked
+                    </p>
+                  </div>
+                  {cls.is_booked ? (
+                    <form action={cancelBookingAction}>
+                      <input type="hidden" name="classId" value={cls.id} />
+                      <button
+                        type="submit"
+                        className="shrink-0 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold text-white hover:border-white/50"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <form action={bookClassAction}>
+                      <input type="hidden" name="classId" value={cls.id} />
+                      <button
+                        type="submit"
+                        disabled={full}
+                        className="shrink-0 rounded-full bg-lime-400 px-4 py-2 text-xs font-semibold text-neutral-950 hover:bg-lime-300 disabled:opacity-40"
+                      >
+                        {full ? "Full" : "Book"}
+                      </button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         )}
       </section>
 

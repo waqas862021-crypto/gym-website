@@ -1,5 +1,6 @@
 import { UserRound } from "lucide-react";
 import { Reveal } from "./reveal";
+import type { Trainer } from "@/lib/trainers";
 
 const benefits = [
   "Personalized training plan built around your goals",
@@ -7,12 +8,10 @@ const benefits = [
   "Coaching from trainers across every discipline we offer",
 ];
 
-// No real trainer profiles exist yet — these are structural placeholders,
-// not claims about actual staff. Replace with real trainer data later
-// (see Phase 9 of the build plan).
+// Shown only until real trainers exist in the admin-managed trainers table.
 const trainerPlaceholders = [1, 2, 3];
 
-export function TrainingSection() {
+export function TrainingSection({ trainers }: { trainers: Trainer[] }) {
   return (
     <section id="training" className="scroll-mt-20 bg-neutral-950 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6">
@@ -47,16 +46,27 @@ export function TrainingSection() {
 
           <Reveal delay={150}>
             <div className="grid grid-cols-3 gap-4">
-              {trainerPlaceholders.map((n) => (
-                <div
-                  key={n}
-                  className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] text-neutral-500"
-                >
-                  <UserRound className="h-10 w-10" />
-                  <span className="text-xs">Trainer profile</span>
-                  <span className="text-xs">coming soon</span>
-                </div>
-              ))}
+              {trainers.length > 0
+                ? trainers.map((trainer) => (
+                    <div
+                      key={trainer.id}
+                      className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center text-neutral-300"
+                    >
+                      <UserRound className="h-10 w-10 text-lime-400" />
+                      <span className="text-sm font-semibold text-white">{trainer.name}</span>
+                      <span className="text-xs text-neutral-500">{trainer.specialty}</span>
+                    </div>
+                  ))
+                : trainerPlaceholders.map((n) => (
+                    <div
+                      key={n}
+                      className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] text-neutral-500"
+                    >
+                      <UserRound className="h-10 w-10" />
+                      <span className="text-xs">Trainer profile</span>
+                      <span className="text-xs">coming soon</span>
+                    </div>
+                  ))}
             </div>
           </Reveal>
         </div>

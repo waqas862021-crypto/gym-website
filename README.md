@@ -59,10 +59,10 @@ locally:
 
 ## Status
 
-Phase 8 (AI customer-service agent) — a floating chat widget on the public
-site and member portal answers only from the admin-editable
-`ai_knowledge_base` table (seeded from `data/gym-info.ts`), matched by
-keyword through `lib/ai/mockProvider.ts`. Any question it can't match
-becomes a `support_tickets` row instead of a guessed answer. `/admin` gets
-Knowledge Base CRUD and a Support Tickets queue, plus a live "Open Tickets"
-stat. Trainers/classes/bookings and reporting are the remaining phases.
+Phase 9 (trainers, classes & bookings) — admin manages trainers and a class
+schedule from `/admin`; the public site's Personal Training section now
+shows real trainer profiles instead of placeholders; members book/cancel
+classes from `/portal` through the shared `bookClass()`/`cancelBooking()`
+service, which enforces an active membership, class capacity, and
+double-booking, and sends a booking-confirmation email on success.
+Reporting is the remaining phase.

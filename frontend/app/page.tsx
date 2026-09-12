@@ -13,9 +13,11 @@ import { ContactSection } from "@/components/contact-section";
 import { Footer } from "@/components/footer";
 import { ChatWidget } from "@/components/chat-widget";
 import { getGalleryImages } from "@/lib/gallery";
+import { getActiveTrainers } from "@/lib/trainers";
 
-export default function Home() {
+export default async function Home() {
   const galleryImages = getGalleryImages();
+  const trainers = await getActiveTrainers();
 
   return (
     <>
@@ -26,7 +28,7 @@ export default function Home() {
         <ServicesSection />
         <FacilitiesSection />
         <ExperienceSection />
-        <TrainingSection />
+        <TrainingSection trainers={trainers} />
         <MembershipSection />
         <GallerySection images={galleryImages} />
         <ReviewsSection />
