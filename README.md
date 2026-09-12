@@ -59,9 +59,10 @@ locally:
 
 ## Status
 
-Phase 6 (mocked email system) — on top of Phase 5, welcome, payment
-confirmation, and contact-response emails fire automatically through a
-mocked provider (`frontend/lib/email`), logged to `email_logs` and visible
-in `/admin`. A daily Vercel Cron job (`frontend/vercel.json`) sends renewal
-reminders and expired-membership notices. AI agent and attendance are later
-phases.
+Phase 7 (attendance: QR + manual check-in) — on top of Phase 6, each
+member's portal shows a static, signed QR check-in code; `/reception`
+(reception/admin roles) supports scanning that code or searching and
+checking a member in manually, both through one shared
+`recordAttendance()` function that enforces an active membership and
+same-day dedup. `/admin` shows a live today's-attendance count. AI agent
+is the remaining later phase before trainers/classes and reporting.

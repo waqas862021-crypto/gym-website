@@ -16,7 +16,8 @@
     "lucide-react": "^0.460.0",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^2.4.3",
-    "jose": "^5.9.6"
+    "jose": "^5.9.6",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -24,6 +25,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/bcryptjs": "^2.4.6",
+    "@types/qrcode": "^1.5.5",
     "tailwindcss": "^3.4.0",
     "postcss": "^8",
     "autoprefixer": "^10",

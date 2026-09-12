@@ -1,6 +1,8 @@
+import QRCode from "qrcode";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { getSession, clearSessionCookie } from "@/lib/auth/session";
+import { createAttendanceToken } from "@/lib/auth/jwt";
 import { getCurrentMembership } from "@/lib/memberships";
 import { signOut } from "../(auth)/actions";
 import { updateProfile } from "./actions";
@@ -16,7 +18,7 @@ export default async function PortalPage({
 
   const { error, renewed } = await searchParams;
 
-  const [{ rows: userRows }, membership, { rows: plans }, { rows: paymentRows }] =
+  const [{ rows: userRows }, membership, { rows: plans }, { rows: paymentRows }, { rows: attendanceRows }] =
     await Promise.all([
       sql`select full_name, is_active from users where id = ${session.userId}`,
       getCurrentMembership(session.userId),
@@ -27,6 +29,13 @@ export default async function PortalPage({
         from payments
         where user_id = ${session.userId}
         order by created_at desc
+        limit 10
+      `,
+      sql`
+        select id, method, to_char(checked_in_at, 'YYYY-MM-DD HH24:MI') as checked_in_at
+        from attendance
+        where user_id = ${session.userId}
+        order by checked_in_at desc
         limit 10
       `,
     ]);
@@ -40,6 +49,8 @@ export default async function PortalPage({
   }
 
   const fullName: string = userRows[0]?.full_name ?? "";
+  const attendanceToken = await createAttendanceToken(session.userId);
+  const qrDataUrl = await QRCode.toDataURL(attendanceToken, { margin: 1, width: 220 });
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 bg-neutral-950 px-6 py-16 text-white">
@@ -86,6 +97,29 @@ export default async function PortalPage({
           <p className="mt-4 text-sm text-neutral-400">
             No membership on file yet. Visit reception to get set up.
           </p>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">Check-In QR Code</h2>
+        <p className="mt-1 text-xs text-neutral-500">
+          Show this at reception to check in. It doesn&apos;t expire, so keep it private.
+        </p>
+        <div className="mt-4 w-fit rounded-xl bg-white p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- a small server-generated data URI, not worth next/image here */}
+          <img src={qrDataUrl} alt="Your check-in QR code" width={220} height={220} />
+        </div>
+        {attendanceRows.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs font-medium text-neutral-400">Recent check-ins</p>
+            <ul className="mt-2 space-y-1 text-sm text-neutral-400">
+              {attendanceRows.map((row) => (
+                <li key={row.id}>
+                  {row.checked_in_at} · {row.method}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 

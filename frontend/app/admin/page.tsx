@@ -34,7 +34,8 @@ export default async function AdminPage({
         (select coalesce(sum(amount_sar), 0) from payments where status = 'succeeded') as total_revenue,
         (select count(*) from payments where status = 'pending') as pending_payments,
         (select count(*) from latest_memberships
-          where end_date >= current_date and end_date <= current_date + interval '7 days') as upcoming_expirations
+          where end_date >= current_date and end_date <= current_date + interval '7 days') as upcoming_expirations,
+        (select count(*) from attendance where checked_in_at::date = current_date) as todays_attendance
     `,
     sql`
       select u.id, u.email, u.full_name, u.role, u.is_active,
@@ -80,7 +81,7 @@ export default async function AdminPage({
         <StatCard label="Expiring in 7 Days" value={stats.upcoming_expirations} />
         <StatCard label="Total Revenue" value={`${stats.total_revenue} SAR`} />
         <StatCard label="Pending Payments" value={stats.pending_payments} />
-        <StatCard label="Today's Attendance" value="Coming in Phase 7" />
+        <StatCard label="Today's Attendance" value={stats.todays_attendance} />
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-6">

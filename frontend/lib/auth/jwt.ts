@@ -37,3 +37,27 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     return null;
   }
 }
+
+// The member's QR check-in code. Deliberately static and long-lived (no
+// exp) per the Phase 7 decision — same-day dedup in recordAttendance()
+// handles a shared/photographed QR, rather than rotating tokens.
+const ATTENDANCE_PURPOSE = "attendance";
+
+export async function createAttendanceToken(userId: string): Promise<string> {
+  return new SignJWT({ userId, purpose: ATTENDANCE_PURPOSE })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .sign(getSecret());
+}
+
+export async function verifyAttendanceToken(token: string): Promise<{ userId: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== ATTENDANCE_PURPOSE || typeof payload.userId !== "string") {
+      return null;
+    }
+    return { userId: payload.userId };
+  } catch {
+    return null;
+  }
+}
