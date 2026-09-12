@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Star } from "lucide-react";
 import { gymInfo } from "@data/gym-info";
 import { Reveal } from "./reveal";
@@ -8,11 +9,19 @@ export function HeroSection() {
       id="home"
       className="relative flex min-h-screen items-center overflow-hidden bg-neutral-950"
     >
-      {/* Decorative background — no real gym photography exists yet, so this
-          is an abstract energetic gradient rather than a fake stock photo. */}
+      {/* Real gym photo, if present at public/hero.jpg — the gradients below
+          render on top regardless, so this degrades gracefully if missing. */}
+      <Image
+        src="/hero.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
       <div
         aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(163,230,53,0.18),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(163,230,53,0.12),transparent_40%),linear-gradient(180deg,#0a0a0a,#0a0a0a)]"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(163,230,53,0.18),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(163,230,53,0.12),transparent_40%),linear-gradient(180deg,rgba(10,10,10,0.55),rgba(10,10,10,0.75))]"
       />
       <div
         aria-hidden

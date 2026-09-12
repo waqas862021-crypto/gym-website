@@ -33,8 +33,10 @@ const structuredData = {
   name: gymInfo.name,
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Dhahran",
-    addressCountry: "SA",
+    streetAddress: gymInfo.address.streetAddress,
+    addressLocality: gymInfo.address.addressLocality,
+    postalCode: gymInfo.address.postalCode,
+    addressCountry: gymInfo.address.addressCountry,
   },
   telephone: gymInfo.phone,
   aggregateRating: {

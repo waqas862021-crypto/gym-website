@@ -2,10 +2,10 @@ import { MapPin, Navigation, Phone } from "lucide-react";
 import { gymInfo } from "@data/gym-info";
 import { Reveal } from "./reveal";
 
-// Only the city-level location is known — link to a Maps search by name
-// rather than fabricating a precise address/embed.
+const fullAddress = `${gymInfo.address.streetAddress}, ${gymInfo.address.addressLocality} ${gymInfo.address.postalCode}`;
+
 const directionsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-  `${gymInfo.name} ${gymInfo.location}`,
+  `${gymInfo.name}, ${fullAddress}`,
 )}`;
 
 export function LocationSection() {
@@ -30,7 +30,7 @@ export function LocationSection() {
               {gymInfo.name}
             </h2>
             <p className="mt-4 flex items-center gap-2 text-neutral-300">
-              <MapPin className="h-5 w-5 text-lime-400" /> {gymInfo.location}
+              <MapPin className="h-5 w-5 text-lime-400" /> {fullAddress}
             </p>
             <p className="mt-2 flex items-center gap-2 text-neutral-300">
               <Phone className="h-5 w-5 text-lime-400" /> {gymInfo.phone}

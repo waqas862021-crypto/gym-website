@@ -7,6 +7,13 @@
 export const gymInfo = {
   name: "Goodlife Fitness Gym",
   location: "Dhahran, Saudi Arabia",
+  // From the gym's Google Business Profile.
+  address: {
+    streetAddress: "Abdullah Ibn Al Abbas St, Al Dawhah Al Janubiyah",
+    addressLocality: "Dhahran",
+    postalCode: "34451",
+    addressCountry: "SA",
+  },
   rating: 4.1,
   reviewCount: 45,
   phone: "013 891 2413",

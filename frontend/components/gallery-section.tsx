@@ -1,28 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Expand, X } from "lucide-react";
-import { galleryCategories } from "@data/gym-info";
 import { Reveal } from "./reveal";
 
-// No real gym photography exists yet — these tiles are clearly-labeled
-// placeholders (category + pattern), not fabricated photos of the facility.
-// Swap each tile's content for a real <Image> once photos are supplied.
-const tiles = galleryCategories.flatMap((category, i) =>
-  [0, 1].map((j) => ({
-    id: `${category}-${j}`,
-    category,
-    tall: (i + j) % 3 === 0,
-  })),
-);
-
-const PATTERNS = [
-  "bg-[repeating-linear-gradient(45deg,rgba(163,230,53,0.12)_0px,rgba(163,230,53,0.12)_2px,transparent_2px,transparent_12px)]",
-  "bg-[radial-gradient(circle,rgba(163,230,53,0.18)_1px,transparent_1px)] bg-[length:14px_14px]",
-];
-
-export function GallerySection() {
-  const [active, setActive] = useState<(typeof tiles)[number] | null>(null);
+export function GallerySection({ images }: { images: string[] }) {
+  const [active, setActive] = useState<string | null>(null);
 
   return (
     <section id="gallery" className="scroll-mt-20 bg-neutral-950 py-24 sm:py-32">
@@ -36,31 +20,39 @@ export function GallerySection() {
           </h2>
         </Reveal>
 
-        <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-          {tiles.map((tile, i) => (
-            <Reveal key={tile.id} delay={(i % 5) * 60}>
-              <button
-                type="button"
-                onClick={() => setActive(tile)}
-                className={`group relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-white/10 bg-neutral-900 text-center transition-transform hover:scale-[1.03] ${
-                  tile.tall ? "h-72" : "h-40"
-                } ${PATTERNS[i % PATTERNS.length]}`}
-              >
-                <Expand className="h-5 w-5 text-neutral-500 opacity-0 transition-opacity group-hover:opacity-100" />
-                <span className="text-xs font-medium text-neutral-400">
-                  {tile.category}
-                </span>
-              </button>
-            </Reveal>
-          ))}
-        </div>
+        {images.length === 0 ? (
+          <p className="mt-14 text-neutral-500">Photos coming soon.</p>
+        ) : (
+          <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {images.map((src, i) => (
+              <Reveal key={src} delay={(i % 8) * 60}>
+                <button
+                  type="button"
+                  onClick={() => setActive(src)}
+                  className="group relative block aspect-[4/3] w-full overflow-hidden rounded-xl border border-white/10"
+                >
+                  <Image
+                    src={src}
+                    alt="Goodlife Fitness Gym"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/30 group-hover:opacity-100">
+                    <Expand className="h-6 w-6 text-white" />
+                  </span>
+                </button>
+              </Reveal>
+            ))}
+          </div>
+        )}
       </div>
 
       {active && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={`${active.category} image`}
+          aria-label="Gallery image"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6"
           onClick={() => setActive(null)}
         >
@@ -72,13 +64,17 @@ export function GallerySection() {
           >
             <X className="h-8 w-8" />
           </button>
-          <div className="flex h-[70vh] w-full max-w-3xl flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-neutral-900">
-            <span className="text-lg font-semibold text-white">
-              {active.category}
-            </span>
-            <span className="text-sm text-neutral-500">
-              Photo coming soon
-            </span>
+          <div
+            className="relative h-[80vh] w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={active}
+              alt="Goodlife Fitness Gym"
+              fill
+              sizes="90vw"
+              className="object-contain"
+            />
           </div>
         </div>
       )}

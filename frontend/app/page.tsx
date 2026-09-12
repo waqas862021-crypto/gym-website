@@ -11,8 +11,11 @@ import { ReviewsSection } from "@/components/reviews-section";
 import { LocationSection } from "@/components/location-section";
 import { ContactSection } from "@/components/contact-section";
 import { Footer } from "@/components/footer";
+import { getGalleryImages } from "@/lib/gallery";
 
 export default function Home() {
+  const galleryImages = getGalleryImages();
+
   return (
     <>
       <NavBar />
@@ -24,7 +27,7 @@ export default function Home() {
         <ExperienceSection />
         <TrainingSection />
         <MembershipSection />
-        <GallerySection />
+        <GallerySection images={galleryImages} />
         <ReviewsSection />
         <LocationSection />
         <ContactSection />
