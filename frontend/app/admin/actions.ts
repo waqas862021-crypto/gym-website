@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sql } from "@/lib/db";
@@ -14,13 +15,38 @@ async function requireAdmin() {
   return session;
 }
 
+const roleSchema = z.enum(["member", "reception", "customer_service", "admin", "super_admin"]);
+
+// Only a super_admin can grant admin/super_admin — otherwise any admin could
+// mint another super_admin (or themselves one), which defeats the role
+// boundary entirely. Also block self-role-changes to avoid an admin locking
+// themselves out by accident.
+const ELEVATED_ROLES: ReadonlySet<AppRole> = new Set(["admin", "super_admin"]);
+
 export async function updateMemberRole(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const userId = String(formData.get("userId") ?? "");
-  const role = String(formData.get("role") ?? "") as AppRole;
+  const parsed = roleSchema.safeParse(formData.get("role"));
+  if (!parsed.success) {
+    redirect(`/admin?error=${encodeURIComponent("Invalid role.")}`);
+  }
+  const role = parsed.data;
+
+  if (userId === session.userId) {
+    redirect(`/admin?error=${encodeURIComponent("You can't change your own role.")}`);
+  }
+  if (ELEVATED_ROLES.has(role) && session.role !== "super_admin") {
+    redirect(`/admin?error=${encodeURIComponent("Only a super admin can grant that role.")}`);
+  }
 
   await sql`update users set role = ${role} where id = ${userId}`;
+  revalidatePath("/admin");
+}
+
+export async function markNotificationsRead() {
+  await requireAdmin();
+  await sql`update notifications set is_read = true where user_id is null and is_read = false`;
   revalidatePath("/admin");
 }
 

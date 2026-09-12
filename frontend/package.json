@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "^15.1.0",
@@ -18,7 +19,8 @@
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "qrcode": "^1.5.4",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -32,6 +34,7 @@
     "autoprefixer": "^10",
     "eslint": "^9",
     "eslint-config-next": "^15.1.0",
-    "@eslint/eslintrc": "^3"
+    "@eslint/eslintrc": "^3",
+    "vitest": "^2.1.8"
   }
 }

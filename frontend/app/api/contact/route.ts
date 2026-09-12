@@ -1,11 +1,22 @@
+import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { sendAndLogEmail } from "@/lib/email";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const contactSchema = z.object({
+  name: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  message: z.string().trim().min(10).max(2000),
+});
 
 export async function POST(request: Request) {
+  const ip = await getClientIp();
+  if (!(await checkRateLimit(`contact:${ip}`, 5, 600))) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -13,32 +24,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const { name, email, message } = (body ?? {}) as Record<string, unknown>;
-
-  if (
-    typeof name !== "string" ||
-    !name.trim() ||
-    typeof email !== "string" ||
-    !EMAIL_RE.test(email) ||
-    typeof message !== "string" ||
-    message.trim().length < 10
-  ) {
+  const parsed = contactSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json({ error: "Invalid contact details." }, { status: 400 });
   }
+  const { name, email, message } = parsed.data;
 
   try {
     await sql`
       insert into contact_messages (id, name, email, message)
-      values (${randomUUID()}, ${name.trim()}, ${email.trim()}, ${message.trim()})
+      values (${randomUUID()}, ${name}, ${email}, ${message})
     `;
   } catch {
     return NextResponse.json({ error: "Could not save your message." }, { status: 500 });
   }
 
   await sendAndLogEmail(
-    email.trim(),
+    email,
     "We received your message — Goodlife Fitness Gym",
-    `Hi ${name.trim()}, thanks for reaching out. Our team will get back to you shortly.`,
+    `Hi ${name}, thanks for reaching out. Our team will get back to you shortly.`,
     "contact_response",
   );
 

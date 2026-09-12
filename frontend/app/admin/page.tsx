@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { ADMIN_ROLES, type AppRole } from "@/lib/roles";
+import { NotificationsBell } from "@/components/admin/notifications-bell";
 import { signOut } from "../(auth)/actions";
-import { updateMemberRole, toggleMemberActive, adminRenewMembership } from "./actions";
+import { updateMemberRole, toggleMemberActive, adminRenewMembership, markNotificationsRead } from "./actions";
 import { createKbEntry, toggleKbActive, deleteKbEntry, resolveTicket } from "./ai-actions";
 import { createTrainer, toggleTrainerActive, createClass, deleteClass } from "./classes-actions";
 
@@ -32,6 +33,7 @@ export default async function AdminPage({
     { rows: openTickets },
     { rows: trainers },
     { rows: classes },
+    { rows: notifications },
   ] = await Promise.all([
     sql`
       with latest_memberships as (
@@ -88,8 +90,16 @@ export default async function AdminPage({
       order by c.starts_at desc
       limit 30
     `,
+    sql`
+      select id, title, body, is_read, to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+      from notifications
+      where user_id is null
+      order by created_at desc
+      limit 20
+    `,
   ]);
   const stats = statRows[0];
+  const unreadNotifications = notifications.filter((n) => !n.is_read).length;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-8 bg-neutral-950 px-6 py-16 text-white">
@@ -100,9 +110,21 @@ export default async function AdminPage({
             {session.email} · {session.role}
           </p>
         </div>
-        <Link href="/admin/reports" className="text-sm text-lime-400 hover:underline">
-          View Reports
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/admin/reports" className="text-sm text-lime-400 hover:underline">
+            View Reports
+          </Link>
+          <NotificationsBell
+            notifications={notifications.map((n) => ({
+              id: n.id,
+              title: n.title,
+              body: n.body,
+              createdAt: n.created_at,
+            }))}
+            unreadCount={unreadNotifications}
+            markAllRead={markNotificationsRead}
+          />
+        </div>
       </div>
 
       {error && (

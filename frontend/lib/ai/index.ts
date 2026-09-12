@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
+import { notifyAdmins } from "@/lib/notifications";
 import { mockAiProvider } from "./mockProvider";
 import type { AiProvider, KnowledgeBaseEntry } from "./provider";
 
@@ -39,5 +40,9 @@ export async function getChatReply(
     insert into support_tickets (id, user_id, email, message, status)
     values (${randomUUID()}, ${userId}, ${email}, ${message}, 'open')
   `;
+  await notifyAdmins(
+    "New support ticket",
+    `${email ?? "Anonymous visitor"}: ${message.slice(0, 200)}`,
+  );
   return { reply: FALLBACK_REPLY, escalated: true };
 }

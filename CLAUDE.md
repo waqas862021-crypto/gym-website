@@ -6,9 +6,13 @@ Guidance for Claude Code when working in this repository.
 
 A full gym management platform for Goodlife Fitness Gym (Dhahran, Saudi
 Arabia): premium public website, member portal, admin dashboard, AI
-customer-service agent, membership payments, automated email, and QR-code
-attendance tracking. Being built incrementally — see the current build plan
-for phase order and status; do not jump ahead to a later phase's work.
+customer-service agent, membership payments, automated email, QR-code
+attendance tracking, trainers/classes/bookings, reporting, and hardening
+(rate limiting, validation, tests, notifications). All 11 build-plan phases
+are complete; remaining work is swapping each mock provider for a real one
+once accounts/keys exist (payments, email, AI) — see "Later, out of scope"
+in the build plan. Don't jump ahead of what's actually wired up without
+checking first.
 
 ## Architecture
 
@@ -59,6 +63,19 @@ edited locally; only running/building requires the cloud environment.
 - No comments that just restate what the code does. Only comment non-obvious
   reasoning (e.g. a security or RLS assumption).
 - Match the style of existing code in the file you're editing.
+- Validation: `zod` (`frontend/lib/*`, action files) is the standard for
+  public/unauthenticated boundaries (contact form, chat, signup/login) and
+  for structured/numeric/enum input (e.g. class scheduling, role changes).
+  Simple required-string admin forms may keep the existing lighter
+  trim-and-check pattern — don't rewrite those speculatively.
+- Rate limiting: `frontend/lib/rate-limit.ts` (`checkRateLimit`) is a
+  Postgres-backed fixed-window counter, deliberately not Redis/Upstash — see
+  the Architecture section. Apply it to any new unauthenticated or
+  brute-forceable endpoint (login, signup, contact, chat already have it).
+- Tests: `frontend/**/*.test.ts`, run with `npm test` (Vitest). Mock
+  `@/lib/db`'s `sql` export per test file rather than hitting a real
+  database; `vitest.setup.ts` neutralizes `server-only` so files that import
+  it can still be unit tested under plain Node.
 
 ## Security Rules
 
@@ -77,6 +94,13 @@ edited locally; only running/building requires the cloud environment.
 - Validate and sanitize all user input at every API boundary (Route
   Handlers), not just in the UI.
 - Don't log full API keys, tokens, or user personal data.
+- Only a `super_admin` may grant the `admin` or `super_admin` role
+  (`frontend/app/admin/actions.ts`); a plain `admin` granting either would be
+  a privilege-escalation hole. An admin also can't change their own role,
+  to avoid an accidental lockout.
+- Unauthenticated or easily-automated endpoints (login, signup, contact,
+  chat) must call `checkRateLimit` from `frontend/lib/rate-limit.ts` before
+  doing any real work.
 
 ## Token-Saving Rules
 

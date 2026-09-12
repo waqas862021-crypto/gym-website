@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -13,6 +14,14 @@ async function requireAdmin() {
   if (!ADMIN_ROLES.has(session.role)) redirect("/portal");
   return session;
 }
+
+const classSchema = z.object({
+  trainerId: z.string().uuid(),
+  name: z.string().trim().min(1),
+  startsAt: z.string().min(1),
+  durationMinutes: z.coerce.number().int().positive(),
+  capacity: z.coerce.number().int().positive(),
+});
 
 export async function createTrainer(formData: FormData) {
   await requireAdmin();
@@ -47,15 +56,17 @@ export async function toggleTrainerActive(formData: FormData) {
 export async function createClass(formData: FormData) {
   await requireAdmin();
 
-  const trainerId = String(formData.get("trainerId") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
-  const startsAt = String(formData.get("startsAt") ?? "");
-  const durationMinutes = Number(formData.get("durationMinutes") ?? 60);
-  const capacity = Number(formData.get("capacity") ?? 10);
-
-  if (!trainerId || !name || !startsAt || !durationMinutes || !capacity) {
+  const parsed = classSchema.safeParse({
+    trainerId: formData.get("trainerId"),
+    name: formData.get("name"),
+    startsAt: formData.get("startsAt"),
+    durationMinutes: formData.get("durationMinutes"),
+    capacity: formData.get("capacity"),
+  });
+  if (!parsed.success) {
     redirect(`/admin?error=${encodeURIComponent("All class fields are required.")}`);
   }
+  const { trainerId, name, startsAt, durationMinutes, capacity } = parsed.data;
 
   await sql`
     insert into classes (id, trainer_id, name, starts_at, duration_minutes, capacity)

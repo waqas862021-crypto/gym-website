@@ -59,13 +59,15 @@ locally:
 
 ## Status
 
-Phase 10 (reports & analytics) — `/admin/reports` shows membership,
-financial, and attendance report views (charts via `recharts`) over data
-from Phases 3-9, each with a CSV export. Phase 9 (trainers, classes &
-bookings) is also complete: admin manages trainers and a class schedule from
-`/admin`; the public site's Personal Training section shows real trainer
-profiles instead of placeholders; members book/cancel classes from
-`/portal` through the shared `bookClass()`/`cancelBooking()` service, which
-enforces an active membership, class capacity, and double-booking, and
-sends a booking-confirmation email on success. Hardening is the remaining
-phase.
+All 12 build-plan phases are complete. Phase 11 (hardening) added:
+Postgres-backed rate limiting (`frontend/lib/rate-limit.ts`) on
+login/signup/contact/chat; `zod` validation at public boundaries and
+structured admin input; a privilege-escalation fix so only a `super_admin`
+can grant `admin`/`super_admin`; a `notifications` table with an admin
+dashboard bell (new support tickets); and a Vitest suite (`npm test`)
+covering membership status math, attendance/booking anti-duplicate and
+capacity logic, mock payment outcomes, and role boundaries.
+
+Remaining work is out-of-scope "later" integrations: swapping the mocked
+payments, email, and AI providers for real ones once accounts/keys exist —
+see the build plan.
