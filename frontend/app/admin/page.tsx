@@ -20,7 +20,7 @@ export default async function AdminPage({
   const search = (q ?? "").trim();
   const searchPattern = `%${search}%`;
 
-  const [{ rows: statRows }, { rows: members }, { rows: plans }] = await Promise.all([
+  const [{ rows: statRows }, { rows: members }, { rows: plans }, { rows: emailLogs }] = await Promise.all([
     sql`
       with latest_memberships as (
         select distinct on (user_id) user_id, end_date
@@ -48,6 +48,13 @@ export default async function AdminPage({
       limit 50
     `,
     sql`select slug, name from membership_plans order by sort_order`,
+    sql`
+      select id, recipient, subject, type, status,
+        to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+      from email_logs
+      order by created_at desc
+      limit 20
+    `,
   ]);
   const stats = statRows[0];
 
@@ -162,6 +169,47 @@ export default async function AdminPage({
           </table>
           {members.length === 0 && <p className="mt-4 text-sm text-neutral-400">No members found.</p>}
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">Email Log</h2>
+        <p className="mt-1 text-xs text-neutral-500">
+          Emails are mocked for now — nothing is actually delivered.
+        </p>
+        {emailLogs.length === 0 ? (
+          <p className="mt-4 text-sm text-neutral-400">No emails sent yet.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[600px] text-left text-sm">
+              <thead className="text-neutral-500">
+                <tr>
+                  <th className="pb-2 pr-4">Recipient</th>
+                  <th className="pb-2 pr-4">Subject</th>
+                  <th className="pb-2 pr-4">Type</th>
+                  <th className="pb-2 pr-4">Sent</th>
+                  <th className="pb-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {emailLogs.map((log) => (
+                  <tr key={log.id} className="border-t border-white/10">
+                    <td className="py-2 pr-4">{log.recipient}</td>
+                    <td className="py-2 pr-4">{log.subject}</td>
+                    <td className="py-2 pr-4">{log.type}</td>
+                    <td className="py-2 pr-4 text-neutral-400">{log.created_at}</td>
+                    <td className="py-2">
+                      <span
+                        className={log.status === "sent" ? "text-xs text-green-400" : "text-xs text-red-400"}
+                      >
+                        {log.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <form action={signOut}>

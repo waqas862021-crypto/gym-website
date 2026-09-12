@@ -59,8 +59,9 @@ locally:
 
 ## Status
 
-Phase 5 (admin dashboard core) — on top of Phase 4, `/admin` shows live
-member/revenue/expiration stats and a searchable member list with role
-management, suspend/activate, and a manual (no-charge) renewal. Suspended
-accounts are blocked at both login and on each portal load. AI agent,
-email, and attendance are later phases.
+Phase 6 (mocked email system) — on top of Phase 5, welcome, payment
+confirmation, and contact-response emails fire automatically through a
+mocked provider (`frontend/lib/email`), logged to `email_logs` and visible
+in `/admin`. A daily Vercel Cron job (`frontend/vercel.json`) sends renewal
+reminders and expired-membership notices. AI agent and attendance are later
+phases.

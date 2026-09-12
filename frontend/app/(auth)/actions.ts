@@ -6,6 +6,7 @@ import { sql } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { createSessionToken } from "@/lib/auth/jwt";
 import { setSessionCookie, clearSessionCookie } from "@/lib/auth/session";
+import { sendAndLogEmail } from "@/lib/email";
 import type { AppRole } from "@/lib/roles";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,6 +35,13 @@ export async function signUp(formData: FormData) {
     insert into users (id, email, password_hash, role)
     values (${id}, ${email}, ${passwordHash}, 'member')
   `;
+
+  await sendAndLogEmail(
+    email,
+    "Welcome to Goodlife Fitness Gym",
+    "Thanks for signing up! You can manage your membership, payments, and profile anytime from your member portal.",
+    "welcome",
+  );
 
   const token = await createSessionToken({ userId: id, email, role: "member" });
   await setSessionCookie(token);

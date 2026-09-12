@@ -6,6 +6,7 @@ import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { getPaymentProvider } from "@/lib/payments";
 import { extendMembership } from "@/lib/memberships";
+import { sendAndLogEmail } from "@/lib/email";
 
 export async function renewMembership(formData: FormData) {
   const session = await getSession();
@@ -40,6 +41,13 @@ export async function renewMembership(formData: FormData) {
   }
 
   await extendMembership(session.userId, planSlug, plan.duration_days);
+
+  await sendAndLogEmail(
+    session.email,
+    "Payment received — Goodlife Fitness Gym",
+    `We received your payment of ${amountSar} SAR for the ${planSlug} plan. Your membership has been extended.`,
+    "payment_confirmation",
+  );
 
   redirect("/portal?renewed=1");
 }
