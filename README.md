@@ -59,6 +59,7 @@ locally:
 
 ## Status
 
-Phase 2 (auth & RBAC skeleton) — sign up / log in / log out and role-gated
-`/portal` and `/admin` stub pages exist; membership, payments, and
-attendance are later phases.
+Phase 3 (member portal core) — sign up / log in / log out, role-gated
+`/portal` and `/admin`, and a member profile + real membership status card
+(computed from `end_date`) exist; membership data is entered manually for
+now (no admin CRUD yet). Payments and attendance are later phases.
