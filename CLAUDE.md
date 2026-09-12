@@ -15,16 +15,28 @@ for phase order and status; do not jump ahead to a later phase's work.
 ```
 frontend/   Next.js (App Router, TypeScript) app — UI and API routes (Route
             Handlers). This is both the "frontend" and the "backend" now.
-supabase/   Postgres migrations, applied via the Supabase CLI or dashboard.
+db/         Plain SQL migrations for Vercel Postgres, run manually via the
+            Query tab in Vercel's Storage dashboard.
 prompts/    Behavior-only spec(s) for the AI agent (e.g. system-prompt.md).
             Never invent facts here — facts belong in data/ or the DB.
 data/       Verified gym facts only (services, facilities, contact info).
             Nothing here should be invented; it mirrors what the AI
             knowledge base and public site both read from.
-backend/    Documentation only. Next.js Route Handlers + Supabase (Postgres,
-            Auth, Storage, Row Level Security) fill the role a separate
-            backend server would have. No code should be added here.
+backend/    Documentation only. Next.js Route Handlers + Vercel Postgres fill
+            the role a separate backend server would have. No code should be
+            added here.
 ```
+
+Database & auth: Vercel Postgres (`@vercel/postgres`), not Supabase — chosen
+so the only account needed is the Vercel one already in use, instead of a
+separate Supabase signup. There is no Row Level Security here (that's a
+Supabase-specific feature) — authorization is enforced entirely in
+server-side code (`frontend/lib/auth/session.ts` + role checks), so every
+Route Handler / Server Action that touches user data must check the session
+itself. Auth is hand-rolled: `bcryptjs` for password hashing, `jose` for
+signed session-token cookies (JWT) verified in `frontend/middleware.ts`,
+which runs on the Edge runtime — keep anything imported there Edge-compatible
+(no `bcryptjs`, no Node-only APIs).
 
 Environment: this machine has no local Node.js and cannot install one
 (company policy) — the app is run via GitHub Codespaces or a Vercel deploy
@@ -50,10 +62,13 @@ edited locally; only running/building requires the cloud environment.
 
 ## Security Rules
 
-- Every Supabase table gets Row Level Security policies from the migration
-  that creates it — never ship a table without RLS.
-- `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never import it, or any module
-  that uses it, from a Client Component or anything bundled to the browser.
+- There is no database-level RLS — every Route Handler / Server Action that
+  reads or writes user data must check `getSession()` (and role, where
+  relevant) itself before touching the database. Never assume the DB will
+  stop an unauthorized query.
+- Database access (`frontend/lib/db.ts`) and password hashing
+  (`frontend/lib/auth/password.ts`) are marked `server-only` — never import
+  them, or any module that uses them, from a Client Component.
 - Never hardcode API keys, passwords, or secrets in source files — they
   belong in `frontend/.env.local`, which is git-ignored.
 - Never commit `.env.local` or any file containing real secrets.

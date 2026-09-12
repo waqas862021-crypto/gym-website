@@ -1,9 +1,9 @@
 -- Phase 2: membership plan catalog.
 -- price_sar is left null until real pricing is confirmed (see Phase 4 of
 -- the build plan) — never display an unconfirmed price on the public site.
-create table if not exists public.membership_plans (
-  id uuid primary key default gen_random_uuid(),
-  slug text not null unique,
+-- Uses slug as the primary key (no generated id needed).
+create table if not exists membership_plans (
+  slug text primary key,
   name text not null,
   tagline text not null,
   features text[] not null default '{}',
@@ -13,18 +13,7 @@ create table if not exists public.membership_plans (
   created_at timestamptz not null default now()
 );
 
-alter table public.membership_plans enable row level security;
-
--- Plans are public information — anyone can see what's on offer.
--- No insert/update/delete policy exists yet, so only the service role
--- (the future admin dashboard, Phase 5) can manage the catalog.
-create policy "Anyone can view membership plans"
-  on public.membership_plans
-  for select
-  to anon, authenticated
-  using (true);
-
-insert into public.membership_plans (slug, name, tagline, features, highlighted, sort_order)
+insert into membership_plans (slug, name, tagline, features, highlighted, sort_order)
 values
   (
     'monthly',

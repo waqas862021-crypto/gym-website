@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { sql } from "@/lib/db";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,13 +26,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const supabase = await createClient();
-    const { error } = await supabase.from("contact_messages").insert({
-      name: name.trim(),
-      email: email.trim(),
-      message: message.trim(),
-    });
-    if (error) throw error;
+    await sql`
+      insert into contact_messages (id, name, email, message)
+      values (${randomUUID()}, ${name.trim()}, ${email.trim()}, ${message.trim()})
+    `;
   } catch {
     return NextResponse.json({ error: "Could not save your message." }, { status: 500 });
   }

@@ -7,7 +7,8 @@ frontend and its API layer (Route Handlers under `app/api/`).
 
 ```
 app/              Pages and API routes
-lib/supabase/      Supabase client helpers (browser, server, admin/service-role)
+lib/db.ts          Vercel Postgres client
+lib/auth/          Password hashing, session JWTs, session cookie helpers
 lib/payments/       Payment provider interface (mocked for now)
 lib/email/          Email provider interface (mocked for now)
 lib/ai/             AI provider interface (mocked for now)

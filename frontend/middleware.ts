@@ -1,60 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { ADMIN_ROLES, type AppRole } from "@/lib/roles";
-
-type CookieToSet = { name: string; value: string; options: CookieOptions };
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/jwt";
+import { ADMIN_ROLES } from "@/lib/roles";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const session = token ? await verifySessionToken(token) : null;
 
   const { pathname } = request.nextUrl;
   const isPortalRoute = pathname.startsWith("/portal");
   const isAdminRoute = pathname.startsWith("/admin");
 
-  if ((isPortalRoute || isAdminRoute) && !user) {
+  if ((isPortalRoute || isAdminRoute) && !session) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAdminRoute && user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = profile?.role as AppRole | undefined;
-
-    if (!role || !ADMIN_ROLES.has(role)) {
-      return NextResponse.redirect(new URL("/portal", request.url));
-    }
+  if (isAdminRoute && session && !ADMIN_ROLES.has(session.role)) {
+    return NextResponse.redirect(new URL("/portal", request.url));
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {

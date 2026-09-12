@@ -13,7 +13,7 @@ current status.
 ```
 gym website/
 ├── frontend/     # The Next.js (TypeScript) app — pages AND API routes
-├── supabase/     # Database migrations (Postgres, via Supabase)
+├── db/           # Plain SQL migrations (Vercel Postgres)
 ├── prompts/      # Behavior spec for the AI customer-service agent
 ├── data/         # Verified gym facts (services, facilities, contact info)
 ├── backend/      # Documentation only — see backend/README.md
@@ -24,7 +24,10 @@ gym website/
 ## Stack
 
 - **Next.js** (App Router, TypeScript) — UI and API routes in one app.
-- **Supabase** — Postgres database, auth, and file storage.
+- **Vercel Postgres** — the database, linked directly to this Vercel project
+  (no separate account needed beyond Vercel).
+- Auth is hand-rolled: `bcryptjs` for password hashing, signed session-token
+  cookies (JWT via `jose`) checked in `frontend/middleware.ts`.
 - Payments, email, and the AI provider call are **mocked** behind stable
   interfaces (`frontend/lib/payments`, `frontend/lib/email`, `frontend/lib/ai`)
   until real provider accounts/keys are wired in.
@@ -42,14 +45,20 @@ locally:
 
 ## Getting Started
 
-1. Create a free Supabase project, then copy `.env.example` to
-   `frontend/.env.local` and fill in the Supabase values.
-2. Push this repo to GitHub and connect it to Vercel and/or open it in a
+1. In the Vercel dashboard, go to **Storage** and create/link a Postgres
+   database to this project — this sets the `POSTGRES_URL` environment
+   variable automatically.
+2. Add one more environment variable yourself: `AUTH_SECRET` (a random
+   string — see `.env.example`).
+3. Run the SQL files in `db/` (in order) using the Postgres database's
+   **Query** tab in Vercel.
+4. Push this repo to GitHub and connect it to Vercel and/or open it in a
    Codespace.
-3. Follow the build plan's phases in order — each phase is a separate,
+5. Follow the build plan's phases in order — each phase is a separate,
    reviewed step.
 
 ## Status
 
-Phase 0 (foundation scaffold) — no membership/payment/attendance features
-exist yet.
+Phase 2 (auth & RBAC skeleton) — sign up / log in / log out and role-gated
+`/portal` and `/admin` stub pages exist; membership, payments, and
+attendance are later phases.
