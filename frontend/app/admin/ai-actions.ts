@@ -28,9 +28,13 @@ export async function createKbEntry(formData: FormData) {
     redirect(`/admin?error=${encodeURIComponent("Question, answer, and at least one keyword are required.")}`);
   }
 
+  // sql`` only accepts primitive parameters, not arrays — pass the Postgres
+  // array literal as text and cast it, rather than the JS array itself.
+  const keywordsLiteral = `{${keywords.map((keyword) => `"${keyword.replace(/"/g, '\\"')}"`).join(",")}}`;
+
   await sql`
     insert into ai_knowledge_base (id, question, keywords, answer)
-    values (${randomUUID()}, ${question}, ${keywords}, ${answer})
+    values (${randomUUID()}, ${question}, ${keywordsLiteral}::text[], ${answer})
   `;
   revalidatePath("/admin");
 }
