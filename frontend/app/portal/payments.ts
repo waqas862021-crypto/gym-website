@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
-import { paymentProvider } from "@/lib/payments";
+import { getPaymentProvider } from "@/lib/payments";
 
 function addDays(dateStr: string, days: number): string {
   const d = new Date(`${dateStr}T00:00:00Z`);
@@ -28,7 +28,7 @@ export async function renewMembership(formData: FormData) {
   }
 
   const amountSar = Number(plan.price_sar);
-  const { providerRef, status } = await paymentProvider.createCheckoutSession({
+  const { providerRef, status } = await getPaymentProvider().createCheckoutSession({
     userId: session.userId,
     planSlug,
     amountSar,
