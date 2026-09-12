@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/auth/session";
+import { getSession, clearSessionCookie } from "@/lib/auth/session";
 import { getCurrentMembership } from "@/lib/memberships";
 import { signOut } from "../(auth)/actions";
 import { updateProfile } from "./actions";
@@ -18,7 +18,7 @@ export default async function PortalPage({
 
   const [{ rows: userRows }, membership, { rows: plans }, { rows: paymentRows }] =
     await Promise.all([
-      sql`select full_name from users where id = ${session.userId}`,
+      sql`select full_name, is_active from users where id = ${session.userId}`,
       getCurrentMembership(session.userId),
       sql`select slug, name, price_sar from membership_plans order by sort_order`,
       sql`
@@ -30,6 +30,15 @@ export default async function PortalPage({
         limit 10
       `,
     ]);
+
+  // The session JWT stays valid for up to 7 days regardless of DB state, so
+  // an admin suspending a member mid-session needs this recheck to actually
+  // block portal access before the token expires on its own.
+  if (!userRows[0]?.is_active) {
+    await clearSessionCookie();
+    redirect(`/login?error=${encodeURIComponent("This account has been suspended. Contact reception.")}`);
+  }
+
   const fullName: string = userRows[0]?.full_name ?? "";
 
   return (

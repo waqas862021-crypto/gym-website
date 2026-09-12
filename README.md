@@ -59,9 +59,8 @@ locally:
 
 ## Status
 
-Phase 4 (mocked payments, renewal, receipts) — on top of Phase 3, members
-can renew their membership through a mocked payment provider
-(`frontend/lib/payments`), see the resulting extended expiry, and view a
-payment history. Membership prices are non-production placeholders (see
-`db/0005_payments.sql`) — never shown on the public site. Admin dashboard
-and attendance are later phases.
+Phase 5 (admin dashboard core) — on top of Phase 4, `/admin` shows live
+member/revenue/expiration stats and a searchable member list with role
+management, suspend/activate, and a manual (no-charge) renewal. Suspended
+accounts are blocked at both login and on each portal load. AI agent,
+email, and attendance are later phases.

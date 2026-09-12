@@ -45,12 +45,16 @@ export async function signIn(formData: FormData) {
   const password = String(formData.get("password") ?? "");
 
   const { rows } = await sql`
-    select id, email, password_hash, role from users where email = ${email}
+    select id, email, password_hash, role, is_active from users where email = ${email}
   `;
   const user = rows[0];
 
   if (!user || !(await verifyPassword(password, user.password_hash))) {
     redirect(`/login?error=${encodeURIComponent("Invalid email or password.")}`);
+  }
+
+  if (!user.is_active) {
+    redirect(`/login?error=${encodeURIComponent("This account has been suspended. Contact reception.")}`);
   }
 
   const token = await createSessionToken({
