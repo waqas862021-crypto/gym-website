@@ -13,9 +13,12 @@ create type ticket_status as enum ('open', 'resolved');
 
 -- user_id is null for an unauthenticated visitor's chat; email is whatever
 -- we have on hand (the member's account email, or nothing for a visitor).
+-- No foreign key to users(id): a session JWT can outlive the account it
+-- names (deleted/suspended user, up to 7 days), and a ticket must still be
+-- creatable in that case rather than throwing on insert.
 create table if not exists support_tickets (
   id uuid primary key,
-  user_id uuid references users(id),
+  user_id uuid,
   email text,
   message text not null,
   status ticket_status not null default 'open',
