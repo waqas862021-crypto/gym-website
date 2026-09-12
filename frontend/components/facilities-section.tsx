@@ -1,8 +1,9 @@
+import Image from "next/image";
 import { facilities } from "@data/gym-info";
 import { Reveal } from "./reveal";
 
-// Distinct gradient per facility card in place of real photography — clearly
-// decorative, not a stand-in for an actual photo of the space.
+// Gradient used when a facility has no real photo yet — clearly decorative,
+// not a stand-in for an actual photo of the space.
 const GRADIENTS = [
   "from-lime-500/30 via-neutral-900 to-neutral-950",
   "from-cyan-500/25 via-neutral-900 to-neutral-950",
@@ -26,12 +27,29 @@ export function FacilitiesSection() {
           {facilities.map((facility, i) => (
             <Reveal key={facility.slug} delay={i * 100}>
               <div
-                className={`relative flex h-80 flex-col justify-end overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br p-7 transition-transform duration-300 hover:scale-[1.02] ${GRADIENTS[i % GRADIENTS.length]}`}
+                className={`relative flex h-80 flex-col justify-end overflow-hidden rounded-2xl border border-white/10 p-7 transition-transform duration-300 hover:scale-[1.02] ${
+                  facility.photo ? "" : `bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]}`
+                }`}
               >
-                <h3 className="text-2xl font-bold text-white">
+                {facility.photo && (
+                  <>
+                    <Image
+                      src={facility.photo}
+                      alt={facility.name}
+                      fill
+                      sizes="(min-width: 768px) 33vw, 100vw"
+                      className="object-cover"
+                    />
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
+                    />
+                  </>
+                )}
+                <h3 className="relative text-2xl font-bold text-white">
                   {facility.name}
                 </h3>
-                <p className="mt-2 text-sm text-neutral-300">
+                <p className="relative mt-2 text-sm text-neutral-300">
                   {facility.description}
                 </p>
               </div>

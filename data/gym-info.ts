@@ -83,6 +83,7 @@ export type Facility = {
   slug: string;
   name: string;
   description: string;
+  photo?: string;
 };
 
 export const facilities: Facility[] = [
@@ -90,6 +91,7 @@ export const facilities: Facility[] = [
     slug: "swimming-pool",
     name: "Swimming Pool",
     description: "A dedicated pool for laps, swim training, and recovery.",
+    photo: "/facilities/swimming-pool.jpg",
   },
   {
     slug: "sauna",
