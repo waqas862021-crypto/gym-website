@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { ADMIN_ROLES, type AppRole } from "@/lib/roles";
 import { signOut } from "../(auth)/actions";
 import { updateMemberRole, toggleMemberActive, adminRenewMembership } from "./actions";
+import { createKbEntry, toggleKbActive, deleteKbEntry, resolveTicket } from "./ai-actions";
 
 const ALL_ROLES: AppRole[] = ["member", "reception", "customer_service", "admin", "super_admin"];
 
@@ -20,7 +21,7 @@ export default async function AdminPage({
   const search = (q ?? "").trim();
   const searchPattern = `%${search}%`;
 
-  const [{ rows: statRows }, { rows: members }, { rows: plans }, { rows: emailLogs }] = await Promise.all([
+  const [{ rows: statRows }, { rows: members }, { rows: plans }, { rows: emailLogs }, { rows: kbEntries }, { rows: openTickets }] = await Promise.all([
     sql`
       with latest_memberships as (
         select distinct on (user_id) user_id, end_date
@@ -35,7 +36,8 @@ export default async function AdminPage({
         (select count(*) from payments where status = 'pending') as pending_payments,
         (select count(*) from latest_memberships
           where end_date >= current_date and end_date <= current_date + interval '7 days') as upcoming_expirations,
-        (select count(*) from attendance where checked_in_at::date = current_date) as todays_attendance
+        (select count(*) from attendance where checked_in_at::date = current_date) as todays_attendance,
+        (select count(*) from support_tickets where status = 'open') as open_tickets
     `,
     sql`
       select u.id, u.email, u.full_name, u.role, u.is_active,
@@ -53,6 +55,14 @@ export default async function AdminPage({
       select id, recipient, subject, type, status,
         to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
       from email_logs
+      order by created_at desc
+      limit 20
+    `,
+    sql`select id, question, keywords, answer, is_active from ai_knowledge_base order by created_at desc`,
+    sql`
+      select id, email, message, to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+      from support_tickets
+      where status = 'open'
       order by created_at desc
       limit 20
     `,
@@ -82,6 +92,7 @@ export default async function AdminPage({
         <StatCard label="Total Revenue" value={`${stats.total_revenue} SAR`} />
         <StatCard label="Pending Payments" value={stats.pending_payments} />
         <StatCard label="Today's Attendance" value={stats.todays_attendance} />
+        <StatCard label="Open Tickets" value={stats.open_tickets} />
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -210,6 +221,108 @@ export default async function AdminPage({
               </tbody>
             </table>
           </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">AI Knowledge Base</h2>
+        <p className="mt-1 text-xs text-neutral-500">
+          The chat widget only answers from these entries — edits here change its replies immediately.
+        </p>
+
+        <form action={createKbEntry} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <input
+            type="text"
+            name="question"
+            placeholder="Question (for reference)"
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <input
+            type="text"
+            name="keywords"
+            placeholder="Keywords, comma-separated"
+            required
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none"
+          />
+          <textarea
+            name="answer"
+            placeholder="Answer"
+            required
+            rows={2}
+            className="rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-white/50 focus:outline-none sm:col-span-2"
+          />
+          <button
+            type="submit"
+            className="self-start rounded-full bg-lime-400 px-5 py-2 text-xs font-semibold text-neutral-950 hover:bg-lime-300 sm:col-span-2"
+          >
+            Add Entry
+          </button>
+        </form>
+
+        <ul className="mt-6 space-y-3">
+          {kbEntries.map((entry) => (
+            <li key={entry.id} className="rounded-lg border border-white/10 p-4 text-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-medium">{entry.question}</p>
+                  <p className="mt-1 text-neutral-400">{entry.answer}</p>
+                  <p className="mt-2 text-xs text-neutral-500">Keywords: {entry.keywords.join(", ")}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <form action={toggleKbActive}>
+                    <input type="hidden" name="id" value={entry.id} />
+                    <input type="hidden" name="isActive" value={String(entry.is_active)} />
+                    <button
+                      type="submit"
+                      className={entry.is_active ? "text-xs text-green-400" : "text-xs text-red-400"}
+                    >
+                      {entry.is_active ? "Active (disable)" : "Disabled (enable)"}
+                    </button>
+                  </form>
+                  <form action={deleteKbEntry}>
+                    <input type="hidden" name="id" value={entry.id} />
+                    <button type="submit" className="text-xs text-neutral-500 hover:text-red-400">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </li>
+          ))}
+          {kbEntries.length === 0 && <p className="text-sm text-neutral-400">No knowledge base entries yet.</p>}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold">Support Tickets</h2>
+        <p className="mt-1 text-xs text-neutral-500">
+          Created automatically when the chat agent can&apos;t answer from the knowledge base.
+        </p>
+        {openTickets.length === 0 ? (
+          <p className="mt-4 text-sm text-neutral-400">No open tickets.</p>
+        ) : (
+          <ul className="mt-4 space-y-3 text-sm">
+            {openTickets.map((ticket) => (
+              <li
+                key={ticket.id}
+                className="flex items-start justify-between gap-4 rounded-lg border border-white/10 p-4"
+              >
+                <div>
+                  <p>{ticket.message}</p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {ticket.email ?? "Anonymous visitor"} · {ticket.created_at}
+                  </p>
+                </div>
+                <form action={resolveTicket}>
+                  <input type="hidden" name="id" value={ticket.id} />
+                  <button type="submit" className="shrink-0 text-xs text-lime-400 hover:underline">
+                    Resolve
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

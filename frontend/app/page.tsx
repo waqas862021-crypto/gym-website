@@ -11,6 +11,7 @@ import { ReviewsSection } from "@/components/reviews-section";
 import { LocationSection } from "@/components/location-section";
 import { ContactSection } from "@/components/contact-section";
 import { Footer } from "@/components/footer";
+import { ChatWidget } from "@/components/chat-widget";
 import { getGalleryImages } from "@/lib/gallery";
 
 export default function Home() {
@@ -33,6 +34,7 @@ export default function Home() {
         <ContactSection />
       </main>
       <Footer />
+      <ChatWidget />
     </>
   );
 }

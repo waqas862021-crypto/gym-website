@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { getSession, clearSessionCookie } from "@/lib/auth/session";
 import { createAttendanceToken } from "@/lib/auth/jwt";
 import { getCurrentMembership } from "@/lib/memberships";
+import { ChatWidget } from "@/components/chat-widget";
 import { signOut } from "../(auth)/actions";
 import { updateProfile } from "./actions";
 import { renewMembership } from "./payments";
@@ -219,6 +220,7 @@ export default async function PortalPage({
           Log Out
         </button>
       </form>
+      <ChatWidget />
     </main>
   );
 }

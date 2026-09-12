@@ -59,10 +59,10 @@ locally:
 
 ## Status
 
-Phase 7 (attendance: QR + manual check-in) — on top of Phase 6, each
-member's portal shows a static, signed QR check-in code; `/reception`
-(reception/admin roles) supports scanning that code or searching and
-checking a member in manually, both through one shared
-`recordAttendance()` function that enforces an active membership and
-same-day dedup. `/admin` shows a live today's-attendance count. AI agent
-is the remaining later phase before trainers/classes and reporting.
+Phase 8 (AI customer-service agent) — a floating chat widget on the public
+site and member portal answers only from the admin-editable
+`ai_knowledge_base` table (seeded from `data/gym-info.ts`), matched by
+keyword through `lib/ai/mockProvider.ts`. Any question it can't match
+becomes a `support_tickets` row instead of a guessed answer. `/admin` gets
+Knowledge Base CRUD and a Support Tickets queue, plus a live "Open Tickets"
+stat. Trainers/classes/bookings and reporting are the remaining phases.
