@@ -59,10 +59,13 @@ locally:
 
 ## Status
 
-Phase 9 (trainers, classes & bookings) — admin manages trainers and a class
-schedule from `/admin`; the public site's Personal Training section now
-shows real trainer profiles instead of placeholders; members book/cancel
-classes from `/portal` through the shared `bookClass()`/`cancelBooking()`
-service, which enforces an active membership, class capacity, and
-double-booking, and sends a booking-confirmation email on success.
-Reporting is the remaining phase.
+Phase 10 (reports & analytics) — `/admin/reports` shows membership,
+financial, and attendance report views (charts via `recharts`) over data
+from Phases 3-9, each with a CSV export. Phase 9 (trainers, classes &
+bookings) is also complete: admin manages trainers and a class schedule from
+`/admin`; the public site's Personal Training section shows real trainer
+profiles instead of placeholders; members book/cancel classes from
+`/portal` through the shared `bookClass()`/`cancelBooking()` service, which
+enforces an active membership, class capacity, and double-booking, and
+sends a booking-confirmation email on success. Hardening is the remaining
+phase.

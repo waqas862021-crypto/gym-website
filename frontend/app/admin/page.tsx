@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
@@ -92,11 +93,16 @@ export default async function AdminPage({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-8 bg-neutral-950 px-6 py-16 text-white">
-      <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-neutral-400">
-          {session.email} · {session.role}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-neutral-400">
+            {session.email} · {session.role}
+          </p>
+        </div>
+        <Link href="/admin/reports" className="text-sm text-lime-400 hover:underline">
+          View Reports
+        </Link>
       </div>
 
       {error && (
