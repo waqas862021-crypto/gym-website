@@ -1,10 +1,35 @@
+import { NavBar } from "@/components/nav-bar";
+import { HeroSection } from "@/components/hero-section";
+import { AboutSection } from "@/components/about-section";
+import { ServicesSection } from "@/components/services-section";
+import { FacilitiesSection } from "@/components/facilities-section";
+import { ExperienceSection } from "@/components/experience-section";
+import { TrainingSection } from "@/components/training-section";
+import { MembershipSection } from "@/components/membership-section";
+import { GallerySection } from "@/components/gallery-section";
+import { ReviewsSection } from "@/components/reviews-section";
+import { LocationSection } from "@/components/location-section";
+import { ContactSection } from "@/components/contact-section";
+import { Footer } from "@/components/footer";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-      <h1 className="text-3xl font-bold">Goodlife Fitness Gym</h1>
-      <p className="text-neutral-500">
-        Phase 0 scaffold — the real homepage is built in Phase 1.
-      </p>
-    </main>
+    <>
+      <NavBar />
+      <main>
+        <HeroSection />
+        <AboutSection />
+        <ServicesSection />
+        <FacilitiesSection />
+        <ExperienceSection />
+        <TrainingSection />
+        <MembershipSection />
+        <GallerySection />
+        <ReviewsSection />
+        <LocationSection />
+        <ContactSection />
+      </main>
+      <Footer />
+    </>
   );
 }
