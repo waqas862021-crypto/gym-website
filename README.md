@@ -59,7 +59,9 @@ locally:
 
 ## Status
 
-Phase 3 (member portal core) — sign up / log in / log out, role-gated
-`/portal` and `/admin`, and a member profile + real membership status card
-(computed from `end_date`) exist; membership data is entered manually for
-now (no admin CRUD yet). Payments and attendance are later phases.
+Phase 4 (mocked payments, renewal, receipts) — on top of Phase 3, members
+can renew their membership through a mocked payment provider
+(`frontend/lib/payments`), see the resulting extended expiry, and view a
+payment history. Membership prices are non-production placeholders (see
+`db/0005_payments.sql`) — never shown on the public site. Admin dashboard
+and attendance are later phases.
