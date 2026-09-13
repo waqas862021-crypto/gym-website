@@ -9,7 +9,9 @@ import type { AiProvider, KnowledgeBaseEntry } from "./provider";
 
 // Resolved lazily (not at module load) — see lib/payments/index.ts for why.
 function getAiProvider(): AiProvider {
-  const name = process.env.AI_PROVIDER || "mock";
+  // .trim() guards against a trailing space/newline from pasting the value
+  // into Vercel's env var UI — bitten us twice already on AI_API_KEY.
+  const name = (process.env.AI_PROVIDER || "mock").trim();
   if (name === "mock") return mockAiProvider;
   if (name === "nvidia") return nvidiaAiProvider;
   if (name === "groq") return groqAiProvider;
