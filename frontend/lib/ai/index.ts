@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { notifyAdmins } from "@/lib/notifications";
 import { mockAiProvider } from "./mockProvider";
 import { nvidiaAiProvider } from "./nvidiaProvider";
+import { groqAiProvider } from "./groqProvider";
 import type { AiProvider, KnowledgeBaseEntry } from "./provider";
 
 // Resolved lazily (not at module load) — see lib/payments/index.ts for why.
@@ -11,6 +12,7 @@ function getAiProvider(): AiProvider {
   const name = process.env.AI_PROVIDER || "mock";
   if (name === "mock") return mockAiProvider;
   if (name === "nvidia") return nvidiaAiProvider;
+  if (name === "groq") return groqAiProvider;
   throw new Error(`Unknown AI_PROVIDER: ${name}`);
 }
 
