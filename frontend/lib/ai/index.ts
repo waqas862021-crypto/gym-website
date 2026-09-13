@@ -3,15 +3,15 @@ import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { notifyAdmins } from "@/lib/notifications";
 import { mockAiProvider } from "./mockProvider";
+import { nvidiaAiProvider } from "./nvidiaProvider";
 import type { AiProvider, KnowledgeBaseEntry } from "./provider";
 
 // Resolved lazily (not at module load) — see lib/payments/index.ts for why.
 function getAiProvider(): AiProvider {
   const name = process.env.AI_PROVIDER || "mock";
-  if (name !== "mock") {
-    throw new Error(`Unknown AI_PROVIDER: ${name}`);
-  }
-  return mockAiProvider;
+  if (name === "mock") return mockAiProvider;
+  if (name === "nvidia") return nvidiaAiProvider;
+  throw new Error(`Unknown AI_PROVIDER: ${name}`);
 }
 
 const FALLBACK_REPLY =
