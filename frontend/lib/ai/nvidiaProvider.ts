@@ -28,7 +28,9 @@ function extractContent(message: unknown): string | undefined {
 
 export const nvidiaAiProvider: AiProvider = {
   async getReply(message, knowledgeBase) {
-    const apiKey = process.env.AI_API_KEY;
+    // .trim() guards against a trailing space/newline from pasting the
+    // value into Vercel's env var UI — has bitten us before.
+    const apiKey = process.env.AI_API_KEY?.trim();
     if (!apiKey) throw new Error("AI_API_KEY environment variable is not set.");
 
     try {
