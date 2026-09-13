@@ -5,7 +5,7 @@ import type { AiProvider } from "./provider";
 // Groq's endpoint is OpenAI-compatible and takes plain-string message
 // content (unlike NVIDIA's moonshotai/kimi-k3, which needs typed parts).
 const ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = process.env.AI_MODEL || "llama-3.3-70b-versatile";
+const MODEL = process.env.AI_MODEL || "llama-3.1-8b-instant";
 
 export const groqAiProvider: AiProvider = {
   async getReply(message, knowledgeBase) {
